@@ -12,10 +12,15 @@ const Popup = () => {
   const [statusMsg, setStatusMsg] = useState('');
   const [logs, setLogs] = useState<string[]>([]);
   const [showLogs, setShowLogs] = useState(false);
+  const [pausedUntil, setPausedUntil] = useState(0);
+  const [remainingMs, setRemainingMs] = useState(0);
 
   useEffect(() => {
-    storage.get(['global_enabled']).then((result) => {
+    storage.get(['global_enabled', 'paused_until']).then((result) => {
        setGlobalEnabled(result.global_enabled !== false);
+       const pu = result.paused_until || 0;
+       setPausedUntil(pu);
+       setRemainingMs(Math.max(0, pu - Date.now()));
     });
 
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -35,6 +40,17 @@ const Popup = () => {
           setLogs(result.logs || []);
       });
   };
+
+  useEffect(() => {
+    if (pausedUntil <= 0) return;
+    setRemainingMs(Math.max(0, pausedUntil - Date.now()));
+    const interval = setInterval(() => {
+      const ms = Math.max(0, pausedUntil - Date.now());
+      setRemainingMs(ms);
+      if (ms === 0) setPausedUntil(0);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [pausedUntil]);
 
   useEffect(() => {
       if (!currentSite) return;
@@ -93,12 +109,40 @@ const Popup = () => {
     });
   };
 
-  const StatusIndicator = () => (
+  const pauseFor = (minutes: number) => {
+    const until = Date.now() + minutes * 60 * 1000;
+    storage.set({ paused_until: until });
+    setPausedUntil(until);
+    setRemainingMs(minutes * 60 * 1000);
+  };
+
+  const resumePause = () => {
+    storage.set({ paused_until: 0 });
+    setPausedUntil(0);
+    setRemainingMs(0);
+  };
+
+  const isPausedNow = remainingMs > 0;
+  const StatusIndicator = () => {
+    if (!globalEnabled) return (
       <div className="flex items-center gap-1">
-         <div className={`w-2 h-2 rounded-full ${globalEnabled ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-         <span className="text-xs text-gray-400">{globalEnabled ? 'Monitoring...' : 'Disabled'}</span>
+        <div className="w-2 h-2 rounded-full bg-red-500"></div>
+        <span className="text-xs text-gray-400">Disabled</span>
       </div>
-  );
+    );
+    if (isPausedNow) return (
+      <div className="flex items-center gap-1">
+        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+        <span className="text-xs text-gray-400">Paused</span>
+      </div>
+    );
+    return (
+      <div className="flex items-center gap-1">
+        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+        <span className="text-xs text-gray-400">Monitoring...</span>
+      </div>
+    );
+  };
 
   if (showLogs) {
       return (
@@ -162,6 +206,39 @@ const Popup = () => {
              </span>
         </div>
       </div>
+
+      {isPausedNow ? (
+        <div className="p-3 bg-[#2b2a2a] border-t border-[#3d3d3d] flex items-center justify-between">
+          <div className="flex flex-col">
+            <span className="text-xs text-yellow-400 font-bold uppercase tracking-wider">Paused</span>
+            <span className="font-mono text-sm text-gray-300">
+              {Math.floor(remainingMs / 60000)}m {Math.floor((remainingMs % 60000) / 1000).toString().padStart(2, '0')}s remaining
+            </span>
+          </div>
+          <button
+            onClick={resumePause}
+            className="text-xs bg-[#444] hover:bg-[#555] text-white px-3 py-1.5 rounded border border-[#555] transition-colors"
+          >
+            Resume
+          </button>
+        </div>
+      ) : (
+        <div className="p-3 border-t border-[#3d3d3d] flex items-center justify-between">
+          <span className="text-xs text-gray-500 uppercase tracking-wider">Pause for:</span>
+          <div className="flex gap-1">
+            {[15, 30, 60].map(m => (
+              <button
+                key={m}
+                onClick={() => pauseFor(m)}
+                disabled={!globalEnabled}
+                className="text-xs bg-[#363636] hover:bg-[#444] disabled:opacity-40 disabled:cursor-not-allowed text-gray-300 px-2 py-1 rounded border border-[#555] transition-colors"
+              >
+                {m}m
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-[#f58e0a] grid grid-cols-2 gap-[1px]">
         <button 

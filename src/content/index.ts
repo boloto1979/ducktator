@@ -1,12 +1,17 @@
 import '../style.css';
 import { generateRoast } from '../services/ai';
 import { createOverlay } from './ui';
+import { storage } from '../services/storage';
 
 console.log("[DuckTator] Content script loaded!");
 
 async function applyRoast(url: string) {
-    const roastText = await generateRoast(url);
-    createOverlay(roastText, () => applyRoast(url));
+    const [roastText, storageResult] = await Promise.all([
+        generateRoast(url),
+        storage.get(['sound_enabled']),
+    ]);
+    const soundEnabled = storageResult.sound_enabled !== false;
+    createOverlay(roastText, () => applyRoast(url), soundEnabled);
 }
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {

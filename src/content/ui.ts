@@ -1,7 +1,10 @@
 import { ROAST_DELAY_MINUTES } from '../utils/constants';
+import { playQuack } from '../utils/sound';
 
-export const createOverlay = (roastText: string, onRetry: () => void) => {
+export const createOverlay = (roastText: string, onRetry: () => void, soundEnabled = true) => {
     if (document.getElementById('ducktator-overlay')) return;
+
+    if (soundEnabled) playQuack();
 
     const overlay = document.createElement('div');
     overlay.id = 'ducktator-overlay';

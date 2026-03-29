@@ -4,22 +4,61 @@ import '../style.css';
 import { Layout } from '../components/Layout';
 import { Header } from '../components/Header';
 import { storage } from '../services/storage';
+import { Schedule } from '../types';
+import { DEFAULT_SCHEDULE } from '../utils/constants';
+
+const DAYS = [
+  { label: 'Mon', value: 1 },
+  { label: 'Tue', value: 2 },
+  { label: 'Wed', value: 3 },
+  { label: 'Thu', value: 4 },
+  { label: 'Fri', value: 5 },
+  { label: 'Sat', value: 6 },
+  { label: 'Sun', value: 0 },
+];
 
 const Options = () => {
   const [newSite, setNewSite] = useState('');
   const [blacklist, setBlacklist] = useState<string[]>([]);
   const [status, setStatus] = useState('');
+  const [schedule, setSchedule] = useState<Schedule>(DEFAULT_SCHEDULE);
+  const [soundEnabled, setSoundEnabled] = useState(true);
 
   useEffect(() => {
-    storage.get(['blacklist']).then((result) => {
-      if (result.blacklist) {
-        setBlacklist(result.blacklist);
-      }
+    storage.get(['blacklist', 'schedule', 'sound_enabled']).then((result) => {
+      if (result.blacklist) setBlacklist(result.blacklist);
+      if (result.schedule) setSchedule(result.schedule);
+      setSoundEnabled(result.sound_enabled !== false);
     });
   }, []);
 
   const saveBlacklist = (newList: string[]) => {
     storage.set({ blacklist: newList }).then(() => {
+      setStatus('Saved!');
+      setTimeout(() => setStatus(''), 2000);
+    });
+  };
+
+  const updateSchedule = (partial: Partial<Schedule>) => {
+    const updated = { ...schedule, ...partial };
+    setSchedule(updated);
+    storage.set({ schedule: updated }).then(() => {
+      setStatus('Saved!');
+      setTimeout(() => setStatus(''), 2000);
+    });
+  };
+
+  const toggleDay = (day: number) => {
+    const days = schedule.days.includes(day)
+      ? schedule.days.filter(d => d !== day)
+      : [...schedule.days, day].sort((a, b) => a - b);
+    updateSchedule({ days });
+  };
+
+  const toggleSound = () => {
+    const updated = !soundEnabled;
+    setSoundEnabled(updated);
+    storage.set({ sound_enabled: updated }).then(() => {
       setStatus('Saved!');
       setTimeout(() => setStatus(''), 2000);
     });
@@ -124,6 +163,78 @@ const Options = () => {
                   )}
                 </div>
              </div>
+          </div>
+        </div>
+
+        <div className="mt-6 bg-[#363636] p-4 rounded border border-[#444]">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-bold text-white">Quack Sound</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Play a quack when the duck appears</p>
+            </div>
+            <div
+              onClick={toggleSound}
+              className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${soundEnabled ? 'bg-[#f58e0a]' : 'bg-[#555]'}`}
+            >
+              <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${soundEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 bg-[#363636] p-4 rounded border border-[#444]">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-bold text-white">Active Schedule</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Restrict monitoring to specific days and hours</p>
+            </div>
+            <div
+              onClick={() => updateSchedule({ enabled: !schedule.enabled })}
+              className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${schedule.enabled ? 'bg-[#f58e0a]' : 'bg-[#555]'}`}
+            >
+              <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${schedule.enabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            </div>
+          </div>
+
+          <div className={`space-y-4 transition-opacity ${!schedule.enabled ? 'opacity-40 pointer-events-none' : ''}`}>
+            <div>
+              <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider">Active Days</p>
+              <div className="flex gap-2 flex-wrap">
+                {DAYS.map(({ label, value }) => (
+                  <button
+                    key={value}
+                    onClick={() => toggleDay(value)}
+                    className={`px-3 py-1 rounded text-xs font-bold border transition-colors ${
+                      schedule.days.includes(value)
+                        ? 'bg-[#f58e0a] border-[#f58e0a] text-white'
+                        : 'bg-transparent border-[#555] text-gray-400 hover:border-[#f58e0a] hover:text-[#f58e0a]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-gray-400 mb-1 uppercase tracking-wider">Start Time</p>
+                <input
+                  type="time"
+                  value={schedule.startTime}
+                  onChange={(e) => updateSchedule({ startTime: e.target.value })}
+                  className="bg-[#2b2a2a] border border-[#555] text-gray-200 text-sm rounded px-3 py-2 w-full focus:outline-none focus:border-[#f58e0a] focus:ring-1 focus:ring-[#f58e0a]"
+                />
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 mb-1 uppercase tracking-wider">End Time</p>
+                <input
+                  type="time"
+                  value={schedule.endTime}
+                  onChange={(e) => updateSchedule({ endTime: e.target.value })}
+                  className="bg-[#2b2a2a] border border-[#555] text-gray-200 text-sm rounded px-3 py-2 w-full focus:outline-none focus:border-[#f58e0a] focus:ring-1 focus:ring-[#f58e0a]"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
