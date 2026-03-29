@@ -1,3 +1,5 @@
+import { ROAST_DELAY_MINUTES } from '../utils/constants';
+
 export const createOverlay = (roastText: string, onRetry: () => void) => {
     if (document.getElementById('ducktator-overlay')) return;
 
@@ -90,7 +92,7 @@ export const createOverlay = (roastText: string, onRetry: () => void) => {
 
     closeBtn.onclick = () => {
         overlay.remove();
-        setTimeout(onRetry, 5 * 60 * 1000);
+        setTimeout(onRetry, ROAST_DELAY_MINUTES * 60 * 1000);
     };
 
     container.appendChild(title);

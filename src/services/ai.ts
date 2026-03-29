@@ -5,14 +5,14 @@ declare global {
 }
 
 const FALLBACK_ROASTS = [
-    "Congratulations, idiot! 5 more minutes on this site and you win the failure of the year award.",
-    "Your boss should fire you right now. The duck would approve.",
-    "While you waste oxygen here, a 5-year-old child codes better than you.",
-    "Quack! Get off this useless site or I'll peck your keyboard until it breaks.",
-    "Your career is slowly dying and it's exclusively your fault.",
-    "You are pathetic. This site won't give you a future, but unemployment will.",
-    "Look at you... procrastinating again. What a shame for your species.",
-    "Working is good, right? Slacker."
+    "Congratulations, idiot! 5 more minutes on {domain} and you win the failure of the year award.",
+    "Your boss should fire you right now for being on {domain}. The duck would approve.",
+    "While you waste oxygen on {domain}, a 5-year-old child codes better than you.",
+    "Quack! Get off {domain} or I'll peck your keyboard until it breaks.",
+    "Your career is slowly dying because of {domain} and it's exclusively your fault.",
+    "You are pathetic. {domain} won't give you a future, but unemployment will.",
+    "Look at you... procrastinating on {domain} again. What a shame for your species.",
+    "Working is good, right? Slacker. Close {domain} now."
 ];
 
 export const generateRoast = async (url: string): Promise<string> => {
@@ -38,5 +38,5 @@ export const generateRoast = async (url: string): Promise<string> => {
     console.error("[DuckTator] AI generation failed", e);
   }
 
-  return FALLBACK_ROASTS[Math.floor(Math.random() * FALLBACK_ROASTS.length)].replace('${domain}', hostname);
+  return FALLBACK_ROASTS[Math.floor(Math.random() * FALLBACK_ROASTS.length)].replace('{domain}', hostname);
 };

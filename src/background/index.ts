@@ -1,8 +1,8 @@
 import { storage } from '../services/storage';
 import { isBlacklisted, getHostname } from '../utils/domain';
+import { ROAST_DELAY_MINUTES } from '../utils/constants';
 
 const ALARM_PREFIX = 'roast_';
-const ROAST_DELAY_MINUTES = 5;
 
 const logEvent = (message: string) => {
   storage.log(message);
