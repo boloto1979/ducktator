@@ -12,6 +12,7 @@ export interface AppStorage {
   schedule: Schedule;
   paused_until: number;
   sound_enabled: boolean;
+  aggressiveness: 1 | 2 | 3;
 }
 
 export interface RoastMessage {

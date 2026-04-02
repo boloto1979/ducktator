@@ -56,12 +56,13 @@ const resumeMonitoring = () => {
 };
 
 chrome.runtime.onInstalled.addListener(() => {
-  storage.get(['blacklist', 'global_enabled', 'schedule', 'paused_until', 'sound_enabled']).then((result) => {
+  storage.get(['blacklist', 'global_enabled', 'schedule', 'paused_until', 'sound_enabled', 'aggressiveness']).then((result) => {
       if (!result.blacklist) storage.set({ blacklist: [] });
       if (result.global_enabled === undefined) storage.set({ global_enabled: true });
       if (!result.schedule) storage.set({ schedule: DEFAULT_SCHEDULE });
       if (result.paused_until === undefined) storage.set({ paused_until: 0 });
       if (result.sound_enabled === undefined) storage.set({ sound_enabled: true });
+      if (result.aggressiveness === undefined) storage.set({ aggressiveness: 2 });
       updateBadge(result.global_enabled !== false);
   });
 });

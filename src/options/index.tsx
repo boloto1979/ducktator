@@ -23,12 +23,14 @@ const Options = () => {
   const [status, setStatus] = useState('');
   const [schedule, setSchedule] = useState<Schedule>(DEFAULT_SCHEDULE);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [aggressiveness, setAggressiveness] = useState<1 | 2 | 3>(2);
 
   useEffect(() => {
-    storage.get(['blacklist', 'schedule', 'sound_enabled']).then((result) => {
+    storage.get(['blacklist', 'schedule', 'sound_enabled', 'aggressiveness']).then((result) => {
       if (result.blacklist) setBlacklist(result.blacklist);
       if (result.schedule) setSchedule(result.schedule);
       setSoundEnabled(result.sound_enabled !== false);
+      if (result.aggressiveness) setAggressiveness(result.aggressiveness as 1 | 2 | 3);
     });
   }, []);
 
@@ -59,6 +61,14 @@ const Options = () => {
     const updated = !soundEnabled;
     setSoundEnabled(updated);
     storage.set({ sound_enabled: updated }).then(() => {
+      setStatus('Saved!');
+      setTimeout(() => setStatus(''), 2000);
+    });
+  };
+
+  const setLevel = (level: 1 | 2 | 3) => {
+    setAggressiveness(level);
+    storage.set({ aggressiveness: level }).then(() => {
       setStatus('Saved!');
       setTimeout(() => setStatus(''), 2000);
     });
@@ -182,6 +192,36 @@ const Options = () => {
         </div>
 
         <div className="mt-6 bg-[#363636] p-4 rounded border border-[#444]">
+          <div className="mb-4">
+            <h2 className="font-bold text-white">Duck Aggressiveness</h2>
+            <p className="text-xs text-gray-500 mt-0.5">How hard should the duck roast you?</p>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {([
+              { level: 1 as const, label: 'Gentle', emoji: '🐥', desc: 'Disappointed nudges' },
+              { level: 2 as const, label: 'Aggressive', emoji: '🦆', desc: 'Harsh roasts' },
+              { level: 3 as const, label: 'Brutal', emoji: '☠️', desc: 'Existential dread' },
+            ]).map(({ level, label, emoji, desc }) => (
+              <button
+                key={level}
+                onClick={() => setLevel(level)}
+                className={`p-3 rounded border text-left transition-all ${
+                  aggressiveness === level
+                    ? 'border-[#f58e0a] bg-[#f58e0a]/10'
+                    : 'border-[#555] hover:border-[#f58e0a]/50'
+                }`}
+              >
+                <div className="text-2xl mb-1">{emoji}</div>
+                <div className={`text-xs font-bold ${
+                  aggressiveness === level ? 'text-[#f58e0a]' : 'text-gray-300'
+                }`}>{label}</div>
+                <div className="text-[10px] text-gray-500 mt-0.5">{desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-6 bg-[#363636] p-4 rounded border border-[#444]">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="font-bold text-white">Active Schedule</h2>
@@ -233,6 +273,52 @@ const Options = () => {
                   onChange={(e) => updateSchedule({ endTime: e.target.value })}
                   className="bg-[#2b2a2a] border border-[#555] text-gray-200 text-sm rounded px-3 py-2 w-full focus:outline-none focus:border-[#f58e0a] focus:ring-1 focus:ring-[#f58e0a]"
                 />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 border border-dashed border-[#555] rounded p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-[10px] font-bold tracking-widest text-[#f58e0a] uppercase bg-[#f58e0a]/10 border border-[#f58e0a]/30 px-2 py-0.5 rounded">Coming Soon</span>
+            <span className="text-xs text-gray-500">Features in development</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="bg-[#2b2a2a] rounded border border-[#3a3a3a] p-4 opacity-60">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">📊</span>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-300">Statistics</h3>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                    Track time spent on blocked sites, how many times the duck appeared, your focus streak, and weekly productivity reports.
+                  </p>
+                  <div className="mt-2 flex gap-1 flex-wrap">
+                    {['Time per site', 'Roast count', 'Focus streak', 'Weekly report'].map(tag => (
+                      <span key={tag} className="text-[10px] text-gray-600 border border-[#3a3a3a] px-1.5 py-0.5 rounded">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#2b2a2a] rounded border border-[#3a3a3a] p-4 opacity-60">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">🎯</span>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-300">Mini Challenges</h3>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                    Unlock the site only after completing a small challenge — math problems, typing tests, or a confession phrase you set yourself.
+                  </p>
+                  <div className="mt-2 flex gap-1 flex-wrap">
+                    {['Math quiz', 'Typing test', 'Custom phrase', 'Timer lock'].map(tag => (
+                      <span key={tag} className="text-[10px] text-gray-600 border border-[#3a3a3a] px-1.5 py-0.5 rounded">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
